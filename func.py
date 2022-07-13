@@ -1,7 +1,7 @@
 # [num. channel, height, width], [num, size]
 import numpy as np
-
-from config import N
+from config import N, W
+import torch
 
 
 def dropCost(DR_p, tasks):
@@ -35,3 +35,12 @@ def predictCost(tasks, predict):
         schedule[i] = np.argmax(predict[i:N + 2:-1])
 
     return scheduleCost(tasks, schedule)
+
+
+def capedActivation(cap=W):
+    def f(tensor):
+        c = torch.ones(tensor.size()) * cap
+        c = c.to('cuda')
+        return torch.fmin(tensor, c)
+
+    return f

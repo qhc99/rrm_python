@@ -4,7 +4,7 @@ import os
 import torch
 from scipy.io import loadmat
 from config import TRAIN_BATCH_SIZE, TEST_BATCH_SIZE, LR, EPOCH, \
-    RUNNING_LOSS_PERIOD, TRAINING, MODEL_NAME, DATASET_PATH, W, L2, N
+    RUNNING_LOSS_PERIOD, TRAINING, MODEL_NAME, DATASET_PATH, W, L2
 from type_config import DATASET_TYPE, MODEL_TYPE
 from torch.utils.data import DataLoader
 
@@ -14,7 +14,6 @@ print(torch.__version__)
 
 # load and transform
 data = loadmat(DATASET_PATH)
-print("load data done")
 XTrain = data["XTrain"]
 XValidation = data["XValidation"]
 
@@ -27,7 +26,7 @@ model_name = MODEL_NAME
 
 def WeightedMSELoss(_outputs, _labels):
     msel = torch.nn.MSELoss()
-    _outputs = _outputs * W
+    _outputs = _outputs
     _labels = _labels * W
     return msel(_outputs, _labels)
 
@@ -36,7 +35,7 @@ criterion = WeightedMSELoss
 model = MODEL_TYPE() if model_name is None else torch.load(model_name)
 print(f'using model: {model_name}')
 model = model.cuda()
-optimizer = torch.optim.SGD(model.parameters(), lr=LR, weight_decay=L2)
+optimizer = torch.optim.Adam(model.parameters(), lr=LR,weight_decay=L2)
 
 train_set = DATASET_TYPE(XTrain, YTrain)
 train_loader = DataLoader(train_set, batch_size=TRAIN_BATCH_SIZE, shuffle=True)
