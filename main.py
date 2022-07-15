@@ -1,12 +1,15 @@
 import datetime
 import pathlib
 import os
+
+import numpy as np
 import torch
 from scipy.io import loadmat
 from config import TRAIN_BATCH_SIZE, TEST_BATCH_SIZE, LR, EPOCH, \
     RUNNING_LOSS_PERIOD, TRAINING, MODEL_NAME, DATASET_PATH, W, L2
 from type_config import DATASET_TYPE, MODEL_TYPE
 from torch.utils.data import DataLoader
+from func import cost_stat
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
@@ -35,7 +38,7 @@ criterion = WeightedMSELoss
 model = MODEL_TYPE() if model_name is None else torch.load(model_name)
 print(f'using model: {model_name}')
 model = model.cuda()
-optimizer = torch.optim.Adam(model.parameters(), lr=LR,weight_decay=L2)
+optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=L2)
 
 train_set = DATASET_TYPE(XTrain, YTrain)
 train_loader = DataLoader(train_set, batch_size=TRAIN_BATCH_SIZE, shuffle=True)
@@ -45,13 +48,13 @@ test_loader = DataLoader(test_set, batch_size=TEST_BATCH_SIZE, shuffle=False)
 train_time = datetime.datetime.now().strftime('%Y_%m_%d,%H.%M.%S')
 
 
-def dataset_avg_loss(LOADER):
+def dataset_avg_loss(LOADER, _model=model):
     _running_loss = 0.0
     for _i, _data in enumerate(LOADER, 0):
         _inputs, _labels = _data
         _inputs = _inputs.to(device)
         _labels = _labels.to(device)
-        _outputs = model(_inputs)
+        _outputs = _model(_inputs)
         _loss = criterion(_outputs, _labels)
         _running_loss += _loss.item()
     return _running_loss / len(LOADER)
@@ -80,14 +83,14 @@ if TRAINING:
             # print statistics
             running_loss += loss.item()
             if i % RUNNING_LOSS_PERIOD == RUNNING_LOSS_PERIOD - 1:
-                print(f'[{epoch + 1}:{EPOCH}, {i + 1:5d}] loss: {running_loss / RUNNING_LOSS_PERIOD:.3f}, at '
+                print(f'[{epoch + 1}:{EPOCH}, {i + 1:5d}] loss: {running_loss / RUNNING_LOSS_PERIOD:.4f}, at '
                       f' {datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")}')
                 running_loss = 0.0
 
         model.eval()
 
         valid_loss = dataset_avg_loss(test_loader)
-        print(f'[{epoch + 1}] validation loss: {valid_loss:.3f}, at '
+        print(f'[{epoch + 1}] validation loss: {valid_loss:.4f}, at '
               f'{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
         torch.save(model, pathlib.Path(f"./checkpoints/{train_time}__{epoch + 1}_{MODEL_TYPE.__name__}.pt"))
         if valid_loss < MIN_VALID_LOSS:
@@ -100,7 +103,16 @@ if TRAINING:
     print('Finished Training')
 else:
     model.eval()
-    print(f'training loss: {dataset_avg_loss(train_loader):.3f}, at '
-          f' {datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")}')
-    print(f'validation loss: {dataset_avg_loss(test_loader):.3f}, at '
-          f'{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+    # print(
+    #     f'training loss: {dataset_avg_loss(DataLoader(train_set, batch_size=TEST_BATCH_SIZE, shuffle=False)):.4f}, at '
+    #     f' {datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")}')
+    # print(f'validation loss: {dataset_avg_loss(test_loader):.4f}, at '
+    #       f'{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+    train_cost_out, train_cost_optimal = cost_stat(DataLoader(train_set, batch_size=2048, shuffle=False), model)
+    test_cost_out, test_cost_optimal = cost_stat(DataLoader(test_set, batch_size=2048, shuffle=False), model)
+
+    np.save("train_cost_out.npy", train_cost_out)
+    np.save("train_cost_optimal.npy", train_cost_optimal)
+
+    np.save("test_cost_out.npy", test_cost_out)
+    np.save("test_cost_optimal.npy", test_cost_optimal)

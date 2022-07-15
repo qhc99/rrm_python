@@ -69,31 +69,30 @@ class RRMFastConvNet(torch.nn.Module):
 
 
 class RRMLinearNet(torch.nn.Module):
-    def __init__(self, height, width):
+    def __init__(self):
         super(RRMLinearNet, self).__init__()
         self.seq = torch.nn.Sequential(
-            torch.nn.Linear(height * width, 200),
+            torch.nn.Linear(5 * N, 1024*8),
             torch.nn.ReLU(),
+            torch.nn.Dropout(),
 
-            torch.nn.Linear(200, 400),
+            torch.nn.Linear(1024*8, 1024*8),
             torch.nn.ReLU(),
+            torch.nn.Dropout(),
 
-            torch.nn.Linear(400, 800),
+            torch.nn.Linear(1024*8, 1024*8),
             torch.nn.ReLU(),
+            torch.nn.Dropout(),
 
-            torch.nn.Linear(800, 1600),
+            torch.nn.Linear(1024*8, 1024*8),
             torch.nn.ReLU(),
+            torch.nn.Dropout(),
 
-            torch.nn.Linear(1600, 3200),
+            torch.nn.Linear(1024 * 8, 1024 * 8),
             torch.nn.ReLU(),
+            torch.nn.Dropout(),
 
-            torch.nn.Linear(3200, 6400),
-            torch.nn.ReLU(),
-
-            torch.nn.Linear(6400, 12800),
-            torch.nn.ReLU(),
-
-            torch.nn.Linear(12800, 15),
+            torch.nn.Linear(1024 * 8, N * (N + 1)),
             torch.nn.ReLU(),
         )
 

@@ -73,6 +73,19 @@ class InMemoryPreprocessedImageDataset(torch.utils.data.dataset.Dataset):
         return self.X[idx, :, :, :], self.Y[idx, :]
 
 
+class InMemoryProcessedLinearDataset(torch.utils.data.dataset.Dataset):
+    def __init__(self, X_arg, Y_arg):
+        self.X = X_arg  #
+        self.Y = Y_arg  # T.from_numpy(Y_arg).to(device)
+
+    def __len__(self):
+        return self.X.shape[0]
+
+    def __getitem__(self, idx):
+        X, Y = self.X[idx, 0, :, :], self.Y[idx, :]
+        return np.reshape(X, [-1]), Y
+
+
 class InMemoryLinearSortDataset(torch.utils.data.dataset.Dataset):
     def __init__(self, X_arg, Y_arg):
         self.X = X_arg  #

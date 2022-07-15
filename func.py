@@ -4,37 +4,32 @@ from config import N, W
 import torch
 
 
-def dropCost(DR_p, tasks):
-    return np.sum(tasks[4, DR_p], -1)
-
-
-def delayCost(T, Tasks):
+def seqMappingCost(tasks, schedule):
     time = 0
     cost = 0
-    for i in range(0, len(T)):
-        tk = Tasks[:, T[i, :]]
+    for i in range(0, len(schedule)):
+        tk = tasks[:, int(schedule[i])]
         exe_time = max(tk[0], time)
-        time = exe_time + tk[2]
+        time = (exe_time + tk[2]) * (exe_time <= (tk[0] + tk[1])) + time * (exe_time > (tk[0] + tk[1]))
         cost = cost + (exe_time - tk[0]) * tk[3] * (exe_time <= (tk[0] + tk[1]))
         cost = cost + tk[4] * (exe_time > (tk[0] + tk[1]))
     return cost
 
 
 # [height, width], [size] ([0 1 ..0, 1 0 ..., ])
-def scheduleCost(tasks, schedule):
-    drop_len = len(schedule[schedule == N + 1])
-    idx = np.argsort(schedule)
-    drop_cost = dropCost(idx[N - drop_len + 1:N], tasks)
-    delay_cost = delayCost(idx[1:N - drop_len], tasks)
-    return drop_cost + delay_cost
-
-
 def predictCost(tasks, predict):
-    schedule = np.zeros([N + 1])
-    for i in range(0, N + 1):
-        schedule[i] = np.argmax(predict[i:N + 2:-1])
+    # num = tasks.shape[0]
+    schedule = np.zeros([N])
+    predict = np.reshape(predict, [N, N + 1])
+    indices = set(i for i in range(0, N))
+    for i in range(0, N):
+        srt = np.argsort(predict[:, i])[::-1]
+        while srt[0] not in indices:
+            srt = srt[1::]
+        schedule[i] = srt[0]
+        indices.remove(srt[0])
 
-    return scheduleCost(tasks, schedule)
+    return seqMappingCost(tasks, schedule)
 
 
 def capedActivation(cap=W):
@@ -44,3 +39,21 @@ def capedActivation(cap=W):
         return torch.fmin(tensor, c)
 
     return f
+
+
+# outputs and labels shape: [1,110]
+def cost_stat(LOADER, _model):
+    L = len(LOADER)
+    out_cost = np.zeros([L])
+    optimal_cost = np.zeros([L])
+    for _i, _data in enumerate(LOADER, 0):
+        if _i % 100 == 0:
+            print(_i)
+        _inputs, _labels = _data
+        BATCH = _inputs.shape[0]
+        tasks = _inputs[0, 0, :, :].cpu().detach().numpy()
+        _outputs = _model(_inputs.to('cuda'))
+        out_cost[_i] = predictCost(tasks, _outputs[0, :].cpu().detach().numpy())
+        optimal_cost[_i] = predictCost(tasks, _labels[0, :].cpu().detach().numpy())
+
+    return out_cost, optimal_cost
