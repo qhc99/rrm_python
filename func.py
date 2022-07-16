@@ -47,10 +47,9 @@ def cost_stat(LOADER, _model):
     out_cost = np.zeros([L])
     optimal_cost = np.zeros([L])
     for _i, _data in enumerate(LOADER, 0):
-        if _i % 100 == 0:
+        if _i % 500 == 0:
             print(_i)
         _inputs, _labels = _data
-        BATCH = _inputs.shape[0]
         tasks = _inputs[0, 0, :, :].cpu().detach().numpy()
         _outputs = _model(_inputs.to('cuda'))
         out_cost[_i] = predictCost(tasks, _outputs[0, :].cpu().detach().numpy())

@@ -108,11 +108,11 @@ else:
     #     f' {datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")}')
     # print(f'validation loss: {dataset_avg_loss(test_loader):.4f}, at '
     #       f'{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
-    train_cost_out, train_cost_optimal = cost_stat(DataLoader(train_set, batch_size=2048, shuffle=False), model)
-    test_cost_out, test_cost_optimal = cost_stat(DataLoader(test_set, batch_size=2048, shuffle=False), model)
+    train_cost_out, train_cost_optimal = cost_stat(DataLoader(train_set, batch_size=1, shuffle=False), model)
+    test_cost_out, test_cost_optimal = cost_stat(DataLoader(test_set, batch_size=1, shuffle=False), model)
 
-    np.save("train_cost_out.npy", train_cost_out)
-    np.save("train_cost_optimal.npy", train_cost_optimal)
+    np.save("data/train_cost_out.npy", train_cost_out)
+    np.save("data/train_cost_optimal.npy", train_cost_optimal)
 
-    np.save("test_cost_out.npy", test_cost_out)
-    np.save("test_cost_optimal.npy", test_cost_optimal)
+    np.save("data/test_cost_out.npy", test_cost_out)
+    np.save("data/test_cost_optimal.npy", test_cost_optimal)

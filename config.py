@@ -7,5 +7,5 @@ EPOCH = 1000
 RUNNING_LOSS_PERIOD = 30
 L2 = 1e-5
 DATASET_PATH = "./dataset10.mat"
-MODEL_NAME = "./checkpoints/wait_to_test.pt"
+MODEL_NAME = "./checkpoints/milestone.pt"
 TRAINING = False
