@@ -1,11 +1,15 @@
 TRAIN_BATCH_SIZE = 512
 N = 10
+LESS_N = 5
+NUM_PROP = 5
 W = 10
-TEST_BATCH_SIZE = 1024*2
+TEST_BATCH_SIZE = 1024 * 2
 LR = 1e-4
 EPOCH = 1000
 RUNNING_LOSS_PERIOD = 30
 L2 = 1e-5
-DATASET_PATH = "./dataset10.mat"
+TRAIN_DATASET_PATH = "./dataset10.mat"
+PAD_DATASET_PATH = "./data/test_dataset5_rand_half.mat"
 MODEL_NAME = "./checkpoints/milestone.pt"
 TRAINING = False
+DUMMY_DATA = [50, 0, 11, 5, 500]

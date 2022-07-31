@@ -6,8 +6,9 @@ import numpy as np
 import torch
 from scipy.io import loadmat
 from config import TRAIN_BATCH_SIZE, TEST_BATCH_SIZE, LR, EPOCH, \
-    RUNNING_LOSS_PERIOD, TRAINING, MODEL_NAME, DATASET_PATH, W, L2
+    RUNNING_LOSS_PERIOD, TRAINING, MODEL_NAME, TRAIN_DATASET_PATH, W, L2, PAD_DATASET_PATH
 from type_config import DATASET_TYPE, MODEL_TYPE
+from RRMDataset import PaddedImageTestDataset
 from torch.utils.data import DataLoader
 from func import cost_stat
 
@@ -16,7 +17,7 @@ print(f"Using {device} device")
 print(torch.__version__)
 
 # load and transform
-data = loadmat(DATASET_PATH)
+data = loadmat(TRAIN_DATASET_PATH)
 XTrain = data["XTrain"]
 XValidation = data["XValidation"]
 
@@ -103,16 +104,36 @@ if TRAINING:
     print('Finished Training')
 else:
     model.eval()
-    # print(
-    #     f'training loss: {dataset_avg_loss(DataLoader(train_set, batch_size=TEST_BATCH_SIZE, shuffle=False)):.4f}, at '
-    #     f' {datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")}')
-    # print(f'validation loss: {dataset_avg_loss(test_loader):.4f}, at '
-    #       f'{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
-    train_cost_out, train_cost_optimal = cost_stat(DataLoader(train_set, batch_size=1, shuffle=False), model)
-    test_cost_out, test_cost_optimal = cost_stat(DataLoader(test_set, batch_size=1, shuffle=False), model)
 
-    np.save("data/train_cost_out.npy", train_cost_out)
-    np.save("data/train_cost_optimal.npy", train_cost_optimal)
 
-    np.save("data/test_cost_out.npy", test_cost_out)
-    np.save("data/test_cost_optimal.npy", test_cost_optimal)
+    def testLoss():
+        print(
+            f'training loss: {dataset_avg_loss(DataLoader(train_set, batch_size=TEST_BATCH_SIZE, shuffle=False)):.4f},'
+            f' at {datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")}')
+        print(f'validation loss: {dataset_avg_loss(test_loader):.4f}, at '
+              f'{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+
+
+    def computeScheduleCost():
+        train_cost_out, train_cost_optimal = cost_stat(DataLoader(train_set, batch_size=1, shuffle=False), model)
+        test_cost_out, test_cost_optimal = cost_stat(DataLoader(test_set, batch_size=1, shuffle=False), model)
+
+        np.save("data/train_cost_out.npy", train_cost_out)
+        np.save("data/train_cost_optimal.npy", train_cost_optimal)
+
+        np.save("data/test_cost_out.npy", test_cost_out)
+        np.save("data/test_cost_optimal.npy", test_cost_optimal)
+
+
+    def computeScheduleCost2():
+        _data = loadmat(PAD_DATASET_PATH)
+        X = _data["X"]
+        Y = _data["Y"]
+        db = PaddedImageTestDataset(X, Y)
+        cost_predict, cost_optimal = cost_stat(DataLoader(db, batch_size=1, shuffle=False), model, flexable=True)
+
+        np.save("data/pad_db_cost_predict_rand_half.npy", cost_predict)
+        np.save("data/pad_db_cost_optimal_rand_half.npy", cost_optimal)
+
+
+    computeScheduleCost2()

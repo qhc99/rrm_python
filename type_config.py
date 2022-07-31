@@ -1,5 +1,5 @@
 from RRMNet import RRMFastConvNet
-from RRMDataset import InMemoryPreprocessedImageDataset
+from RRMDataset import ImageDataset
 
-DATASET_TYPE = InMemoryPreprocessedImageDataset
+DATASET_TYPE = ImageDataset
 MODEL_TYPE = RRMFastConvNet
